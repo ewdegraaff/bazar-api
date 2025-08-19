@@ -1,0 +1,26 @@
+policies:
+  # Platform Role Policies
+  - roles: ["superadmin"]
+    actions: ["read", "create", "update", "delete", "manage"]
+    resources: ["*"]  # Full access to everything
+    
+  - roles: ["admin"]
+    actions: ["read", "create", "update", "delete", "execute"]
+    resources: ["users", "files"]
+    
+  - roles: ["user"]
+    actions: ["read"]
+    resources: ["users", "files"]
+    
+  # Plan Role Policies
+  - roles: ["Free"]
+    actions: ["read"]
+    resources: ["users", "files"]
+    
+  - roles: ["Plus"]
+    actions: ["read", "execute"]
+    resources: ["files"]
+    
+  - roles: ["Premium"]
+    actions: ["read", "create", "update", "delete"]
+    resources: ["users", "files"] 
