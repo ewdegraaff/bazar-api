@@ -11,7 +11,7 @@ install:
 
 # Build Docker image
 build:
-	docker build -f docker/server/Dockerfile -t bazar-api .
+	docker buildx build --platform linux/amd64 -f docker/server/Dockerfile -t bazar-api .
 
 # Create ECR repository
 ecr-create:
