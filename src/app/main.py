@@ -1,11 +1,13 @@
 import logging
 import uvicorn
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, Request, Response, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import ValidationError
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy import text
 import time
+from datetime import datetime
 
 import os
 import sys
@@ -65,6 +67,28 @@ def create_app() -> FastAPI:
         openapi_url=f"{settings.API_V1_STR}/openapi.json",
         # generate_unique_id_function=lambda router: f"{router.tags[0]}-{router.name}",
     )
+    
+    # Health check endpoint
+    @app.get("/healthz")
+    async def health_check():
+        """Health check endpoint for container orchestration."""
+        try:
+            # Test database connectivity
+            async with AsyncSessionLocal() as session:
+                await session.execute(text("SELECT 1"))
+                await session.close()
+            
+            return {
+                "status": "healthy", 
+                "timestamp": datetime.utcnow().isoformat(),
+                "service": "bazar-api"
+            }
+        except Exception as e:
+            logger.error(f"Health check failed: {e}")
+            raise HTTPException(
+                status_code=503, 
+                detail="Service unhealthy"
+            )
     
     # Add debug middleware to log all incoming requests
     @app.middleware("http")
