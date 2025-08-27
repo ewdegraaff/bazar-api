@@ -1,6 +1,6 @@
 """Authentication dependencies for FastAPI endpoints."""
-from typing import Annotated
-from fastapi import Depends, HTTPException, status
+from typing import Annotated, Optional
+from fastapi import Depends, HTTPException, status, Header
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 from supabase import create_client, Client
@@ -53,5 +53,25 @@ async def get_current_user(
         logger.error(f"Error getting current user: {str(e)}")
         raise HTTPException(status_code=401, detail="Could not validate credentials")
 
-# Type alias for current user dependency
+async def get_anonymous_user(
+    db: SessionDep,
+    anonymous_id: str = Header(..., alias="X-Anonymous-ID"),
+) -> User:
+    """Get an anonymous user by their anonymous ID from header."""
+    try:
+        user = await auth_service.get_anonymous_user_by_id(anonymous_id, db)
+        if not user:
+            raise HTTPException(
+                status_code=404,
+                detail="Anonymous user not found"
+            )
+        return user
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting anonymous user: {str(e)}")
+        raise HTTPException(status_code=401, detail="Could not validate anonymous user")
+
+# Type aliases for dependencies
 CurrentUser = Annotated[User, Depends(get_current_user)]
+AnonymousUser = Annotated[User, Depends(get_anonymous_user)]

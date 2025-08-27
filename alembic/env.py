@@ -7,7 +7,6 @@ from sqlalchemy import MetaData, Table, Index
 
 from alembic import context
 
-from src.app.core.config import settings
 from src.app.models.core import User, File
 from src.app.models.system_role import SystemRole
 from src.app.models.user_system_role import UserSystemRole
@@ -17,9 +16,9 @@ from src.app.models.base import Base
 # access to the values within the .ini file in use.
 config = context.config
 
-# Override sqlalchemy.url with the sync version from settings
-sync_url = settings.DATABASE_URL.replace('postgresql+asyncpg', 'postgresql')
-config.set_main_option("sqlalchemy.url", sync_url)
+# Don't override sqlalchemy.url - let alembic.ini handle it
+# sync_url = settings.DATABASE_URL.replace('postgresql+asyncpg', 'postgresql')
+# config.set_main_option("sqlalchemy.url", sync_url)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
@@ -36,8 +35,8 @@ target_metadata = Base.metadata
 # ... etc.
 
 def get_url():
-    """Get the sync database URL."""
-    return settings.DATABASE_URL.replace('postgresql+asyncpg', 'postgresql')
+    """Get the database URL from alembic.ini."""
+    return config.get_main_option("sqlalchemy.url")
 
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode.
@@ -71,7 +70,8 @@ def run_migrations_online() -> None:
 
     """
     configuration = config.get_section(config.config_ini_section)
-    configuration["sqlalchemy.url"] = get_url()
+    # Use the URL from alembic.ini, not from environment
+    # configuration["sqlalchemy.url"] = get_url()
     connectable = engine_from_config(
         configuration,
         prefix="sqlalchemy.",

@@ -19,9 +19,7 @@ from src.app.core.error_handlers import (
     sqlalchemy_exception_handler,
     general_exception_handler,
 )
-from src.app.db.init_db import init_db
-from src.app.db.init_auth import main as init_auth
-from src.app.db.session import SessionLocal, AsyncSessionLocal
+from src.app.db.session import AsyncSessionLocal
 
 logger = logging.getLogger(__name__)
 
@@ -30,32 +28,18 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     """Lifespan events for FastAPI application."""
     logger.info(f"Environment: {os.getenv('ENV', 'not set')}")
-    logger.info(f"INIT_DB_ON_STARTUP: {os.getenv('INIT_DB_ON_STARTUP', 'not set')}")
-    logger.info(f"INIT_AUTH_ON_STARTUP: {os.getenv('INIT_AUTH_ON_STARTUP', 'not set')}")
-
-    # Initialize database if enabled
-    if settings.INIT_DB_ON_STARTUP:
-        try:
-            await init_db()
-            logger.info("Database initialized")
-        except Exception as e:
-            logger.error(f"Failed to initialize database: {e}")
-            raise
-    else:
-        logger.info("Database initialization skipped (INIT_DB_ON_STARTUP=false)")
     
-    # Initialize Supabase authentication if enabled
-    if settings.INIT_AUTH_ON_STARTUP:
-        try:
-            logger.info("Initializing Supabase authentication...")
-            init_auth()
-            logger.info("Supabase authentication initialized")
-        except Exception as e:
-            logger.error(f"Failed to initialize Supabase authentication: {e}")
-            # Don't raise here as auth is not critical for app startup
-            logger.warning("Continuing app startup despite auth initialization failure")
-    else:
-        logger.info("Supabase authentication initialization skipped (INIT_AUTH_ON_STARTUP=false)")
+    # Simple database connectivity check
+    try:
+        async with AsyncSessionLocal() as session:
+            await session.execute(text("SELECT 1"))
+            await session.close()
+        logger.info("Database connection verified")
+    except Exception as e:
+        logger.error(f"Database connection failed: {e}")
+        # Don't fail startup for database issues in development
+        if os.getenv("ENV") == "production":
+            raise
     
     yield
 
@@ -65,7 +49,6 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
         title=settings.PROJECT_NAME,
         openapi_url=f"{settings.API_V1_STR}/openapi.json",
-        # generate_unique_id_function=lambda router: f"{router.tags[0]}-{router.name}",
     )
     
     # Health check endpoint

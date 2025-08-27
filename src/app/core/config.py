@@ -34,18 +34,6 @@ else:
 class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     
-    # Database initialization settings
-    INIT_DB_ON_STARTUP: bool = Field(
-        default_factory=lambda: os.getenv("INIT_DB_ON_STARTUP", "false").lower() == "true",
-        description="Whether to initialize database on startup"
-    )
-    
-    # Supabase initialization settings
-    INIT_AUTH_ON_STARTUP: bool = Field(
-        default_factory=lambda: os.getenv("INIT_AUTH_ON_STARTUP", "false").lower() == "true",
-        description="Whether to initialize Supabase authentication on startup"
-    )
-    
     # Supabase Configuration
     SUPABASE_URL: str = Field(
         default_factory=lambda: os.getenv("SUPABASE_URL"),
@@ -54,10 +42,6 @@ class Settings(BaseSettings):
     SUPABASE_KEY: str = Field(
         default_factory=lambda: os.getenv("SUPABASE_KEY"),
         description="Supabase anon/public key"
-    )
-    SUPABASE_SERVICE_KEY: str = Field(
-        default_factory=lambda: os.getenv("SUPABASE_SERVICE_KEY"),
-        description="Supabase service role key for admin operations"
     )
     
     # Database Configuration
@@ -93,7 +77,5 @@ if not settings.SUPABASE_URL:
     raise ValueError("SUPABASE_URL environment variable is required")
 if not settings.SUPABASE_KEY:
     raise ValueError("SUPABASE_KEY environment variable is required")
-if not settings.SUPABASE_SERVICE_KEY:
-    raise ValueError("SUPABASE_SERVICE_KEY environment variable is required")
 if not settings.DATABASE_URL:
     raise ValueError("DATABASE_URL environment variable is required")

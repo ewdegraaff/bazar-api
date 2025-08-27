@@ -23,6 +23,7 @@ class SupabaseSession(BaseModel):
     access_token: str
     refresh_token: str
     expires_in: int
+    expires_at: str
     token_type: str
 
 
@@ -66,3 +67,17 @@ class RegisterRequest(BaseModel):
         """Validate that passwords match."""
         if self.password != self.confirm_password:
             raise ValueError("Passwords do not match")
+
+
+class AnonymousUserResponse(BaseModel):
+    """Response schema for anonymous user creation."""
+    success: bool
+    anonymous_user_id: str
+    anonymous_id: str
+    message: str
+
+
+class ConvertAnonymousRequest(BaseModel):
+    """Request schema for converting anonymous user to verified user."""
+    anonymous_id: str
+    register_data: RegisterRequest

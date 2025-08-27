@@ -2,6 +2,9 @@
 """
 Create and authenticate users in Supabase, storing their access token in .env.local.
 Reads Supabase credentials from docker/server/.env.
+
+NOTE: This script is for development purposes only. In production, users should
+register through the normal flow without admin privileges.
 """
 import os
 import sys
@@ -12,7 +15,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 # Load environment from the correct docker/server/.env file
-env_path = Path(__file__).resolve().parent.parent.parent / "docker" / "server" / ".env"
+env_path = Path(__file__).resolve().parent.parent.parent.parent / "docker" / "server" / ".env"
 load_dotenv(dotenv_path=env_path)
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
@@ -22,25 +25,27 @@ SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY")
 if not all([SUPABASE_URL, SUPABASE_KEY, SUPABASE_SERVICE_KEY]):
     raise EnvironmentError("SUPABASE_URL, SUPABASE_KEY, and SUPABASE_SERVICE_KEY must be set in docker/server/.env")
 
+# Development users - these will not be created in production
 USERS = [
     {
         "id": "f1b00781-2caf-46fd-a342-77f9494d545a",
         "email": "kelly@getbazar.app",
         "password": "AutomateEverything123!",
         "name": "Kelly",
-        "system_role": "admin"  # Changed from organization_id to system_role
+        "system_role": "admin"
     },
     {
         "id": "e5cf73d9-877c-4ea5-accb-d46d4528e0a7",
         "email": "emanuel@getbazar.app",
         "password": "AutomateEverything123!",
         "name": "Emanuel",
-        "system_role": "superadmin"  # Changed from organization_id to system_role
+        "system_role": "superadmin"
     }
 ]
 
 def create_supabase_user(user: dict) -> None:
     """Create a user in Supabase with custom metadata and mark email as verified."""
+    # Create new user using service role key to bypass email confirmation
     url = f"{SUPABASE_URL}/auth/v1/admin/users"
     headers = {
         "apikey": SUPABASE_SERVICE_KEY,
@@ -53,8 +58,8 @@ def create_supabase_user(user: dict) -> None:
         "user_metadata": {
             "user_id": user["id"],
             "name": user["name"],
-            "system_role": user["system_role"],  # Store system role instead of organization
-            "plan_type": "Free"  # Default plan for new users
+            "system_role": user["system_role"],
+            "plan_type": "Free"
         },
         "email_confirm": True
     }
@@ -62,6 +67,8 @@ def create_supabase_user(user: dict) -> None:
     print(f"Create user response for {user['email']}: {resp.status_code} {resp.text}")
     if resp.status_code not in (200, 201, 409):  # 409 = already exists
         raise RuntimeError(f"Failed to create user {user['email']}: {resp.text}")
+    
+    print(f"✅ User {user['email']} created with service role key")
 
 def authenticate_supabase_user(user: dict) -> str:
     """Authenticate a user and return the access token."""
@@ -81,7 +88,7 @@ def authenticate_supabase_user(user: dict) -> str:
 
 def write_token_to_env(email: str, token: str) -> None:
     """Write the access token to .env.local as USER_ACCESS_TOKEN_<EMAIL>."""
-    env_path = Path(__file__).resolve().parent.parent / ".env.local"
+    env_path = Path(__file__).resolve().parent.parent.parent.parent / ".env.local"
     lines = []
     if env_path.exists():
         with env_path.open("r") as f:
@@ -92,6 +99,7 @@ def write_token_to_env(email: str, token: str) -> None:
     lines.append(f"{key}={token}\n")
     with env_path.open("w") as f:
         f.writelines(lines)
+    print(f"📝 Token written to {env_path}")
 
 def delete_supabase_user_by_email(email: str) -> None:
     """
@@ -142,20 +150,27 @@ def main() -> None:
     print(f"📁 Loading environment from: {env_path}")
     print(f"🔗 Supabase URL: {SUPABASE_URL}")
     
-    for user in USERS:
-        print(f"\n🔄 Processing user: {user['email']} ({user['system_role']})")
-        delete_supabase_user_by_email(user["email"])
-    
-    for user in USERS:
-        create_supabase_user(user)
-        # Check if user exists after creation
-        if user_exists(user["email"]):
-            print(f"✅ User {user['email']} exists in Supabase after creation.")
-        else:
-            print(f"❌ User {user['email']} NOT found in Supabase after creation.")
-        token = authenticate_supabase_user(user)
-        write_token_to_env(user["email"], token)
-        print(f"🎉 User {user['email']} created and authenticated. Access token written to .env.local.")
+    try:
+        for user in USERS:
+            print(f"🔄 Processing {user['email']} ({user['system_role']})")
+            delete_supabase_user_by_email(user["email"])
+        
+        for user in USERS:
+            create_supabase_user(user)
+            # Check if user exists after creation
+            if user_exists(user["email"]):
+                print(f"✅ User {user['email']} exists in Supabase after creation.")
+            else:
+                print(f"❌ User {user['email']} NOT found in Supabase after creation.")
+            token = authenticate_supabase_user(user)
+            write_token_to_env(user["email"], token)
+            print(f"✅ {user['email']} created and authenticated")
+        
+        print("✅ Authentication initialization completed successfully!")
+        
+    except Exception as e:
+        print(f"❌ Authentication initialization failed: {e}")
+        raise
 
 if __name__ == "__main__":
     try:

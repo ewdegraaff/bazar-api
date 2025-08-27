@@ -8,7 +8,6 @@ class UserPlan(Base):
     """UserPlan model for subscription-based feature access (Free, Plus, Premium)."""
     __tablename__ = "user_plans"
     
-    id = Column(SQLUUID, primary_key=True, server_default=text('gen_random_uuid()'))
     user_id = Column(SQLUUID, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     plan_type = Column(String, nullable=False)  # "Free", "Plus", "Premium"
     is_active = Column(Boolean, default=True, nullable=False)

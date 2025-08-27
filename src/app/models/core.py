@@ -9,9 +9,11 @@ class User(Base):
     """User model for managing users."""
     __tablename__ = "users"
     
-    id = Column(SQLUUID, primary_key=True, server_default=text('gen_random_uuid()'))
-    email = Column(String, nullable=False, unique=True)
+    email = Column(String, nullable=True, unique=True)  # Made nullable for anonymous users
     name = Column(String, nullable=True)
+    is_anonymous = Column(Boolean, default=False, nullable=False)
+    anonymous_id = Column(String, nullable=True, unique=True)  # For tracking before email confirmation
+    converted_from_anonymous_id = Column(String, nullable=True)  # Links to previous anonymous profile
     
     # Relationships
     files = relationship("File", back_populates="owner")
@@ -28,6 +30,6 @@ class File(Base):
     download_url = Column(String, nullable=False)
     owner_id = Column(SQLUUID, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     deleted_at = Column(DateTime, nullable=True)
-
+    
     # Relationships
     owner = relationship("User", back_populates="files") 

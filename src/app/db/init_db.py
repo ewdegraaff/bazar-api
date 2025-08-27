@@ -5,6 +5,7 @@ from pathlib import Path
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Tuple
+import sys
 
 from src.app.db.session import AsyncSessionLocal
 from src.app.models.core import User
@@ -224,5 +225,15 @@ async def init_db() -> None:
             raise
 
 
+def main() -> None:
+    """Main function to run database initialization."""
+    try:
+        asyncio.run(init_db())
+        print("✅ Database initialization completed successfully!")
+    except Exception as e:
+        print(f"❌ Database initialization failed: {e}")
+        sys.exit(1)
+
+
 if __name__ == "__main__":
-    asyncio.run(init_db()) 
+    main() 
