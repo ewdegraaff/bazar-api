@@ -88,7 +88,7 @@ def authenticate_supabase_user(user: dict) -> str:
 
 def write_token_to_env(email: str, token: str) -> None:
     """Write the access token to .env.local as USER_ACCESS_TOKEN_<EMAIL>."""
-    env_path = Path(__file__).resolve().parent.parent.parent.parent / ".env.local"
+    env_path = Path(__file__).resolve().parent.parent / ".env.local"
     lines = []
     if env_path.exists():
         with env_path.open("r") as f:

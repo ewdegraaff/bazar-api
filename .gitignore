@@ -73,7 +73,7 @@ venv.bak/
 **/*.env
 env.bak/
 .env.prod
-
+*.env.local
 
 venv.bak/
 .spyderproject
