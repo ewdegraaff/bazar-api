@@ -3,43 +3,6 @@
 ## Overview
 This repository contains a FastAPI-based backend application designed to manage organizations, users, and role-based access control. It uses Supabase for authentication and PostgreSQL for data storage, with Alembic for database migrations.
 
-## Project Structure
-```
-.
-├── README.md
-├── Makefile, run-tests.sh, start-dev.sh
-├── docker/, docker-compose.yml, .dockerignore
-├── pyproject.toml, .pre-commit-config.yaml, .gitignore
-├── poetry_scripts.py
-└── src/
-    └── app/
-        ├── main.py
-        ├── core/
-        │   ├── config.py
-        │   └── events.py
-        ├── api/
-        │   ├── deps.py
-        │   └── api_v1/
-        │       ├── api.py
-        │       └── endpoints/
-        │           ├── auth.py
-        │           ├── users.py
-        │           └── organizations.py
-        ├── crud/
-        │   ├── base.py
-        │   ├── crud_user.py
-        │   └── crud_organization.py
-        ├── schemas/
-        │   ├── base.py
-        │   ├── user.py
-        │   ├── organization.py
-        │   ├── auth.py
-        │   └── ...
-        ├── services/
-        │   └── auth_service.py
-        └── utils/
-            └── auth.py, validation.py
-```
 
 ## Key Features
 - **FastAPI**: Modern, fast web framework for building APIs.
@@ -84,7 +47,16 @@ This repository contains a FastAPI-based backend application designed to manage 
    poetry run alembic upgrade head
    ```
 
-5. **Run the Application**:
+5. **Init Scripts**:
+   ```bash
+   # Init seed
+   make init-db
+
+   # Init auth
+   make init-auth
+   ```
+
+6. **Run the Application**:
    ```bash
    # Development mode with auto-reload
    poetry run python run.py
@@ -108,43 +80,13 @@ This repository contains a FastAPI-based backend application designed to manage 
   poetry run alembic downgrade -1
   ```
 
-## API Endpoints
-- **Authentication**: `/api/v1/auth/`
-  - POST `/login`: Login with email/password
-  - POST `/refresh`: Refresh access token
-
-- **Users**: `/api/v1/users/`
-  - GET `/`: List users
-  - POST `/`: Create user
-  - GET `/me`: Get current user
-  - GET `/{id}`: Get user by ID
-  - PUT `/{id}`: Update user
-  - DELETE `/{id}`: Delete user
-
-
-
 ## Role-Based Access Control
 - **Free**: Can read users and files
 - **Plus**: Can read and execute files (workflow invocation)
 - **Premium**: Full access to create, read, update, and delete users and files
 
-## License
-[Specify your license here]
 
 ## Database Setup and Migrations
-
-### Prerequisites
-- PostgreSQL 12 or higher
-- Python 3.9 or higher
-- Poetry for dependency management
-
-### Database Configuration
-1. Create a PostgreSQL database:
-```bash
-createdb bazardev
-```
-
-2. Set up the database URL (optional, defaults to localhost), see .env.example in docker folder
 
 ### Running Migrations
 
@@ -246,16 +188,6 @@ poetry run alembic history --verbose
 ```bash
 poetry run alembic current
 ```
-
-### Best Practices
-
-1. Always create new migrations for schema changes
-2. Test migrations both up and down
-3. Keep migrations atomic and focused
-4. Review auto-generated migrations before applying
-5. Back up the database before major migrations
-6. Use meaningful migration names
-7. Document any manual steps required
 
 
 
