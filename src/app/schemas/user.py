@@ -10,11 +10,12 @@ from .base import BaseSchema, TimestampSchema, IDSchema, BaseResponseSchema
 class User(BaseSchema):
     """User schema."""
     id: UUID
-    name: str
-    email: EmailStr
+    name: Optional[str] = None
+    email: Optional[EmailStr] = None
     created_at: datetime
     updated_at: datetime
     deleted_at: Optional[datetime] = None
+    marked_for_deletion: bool
 
 
 # request
@@ -22,13 +23,14 @@ class User(BaseSchema):
 # in
 class UserBase(BaseSchema):
     """Base user schema."""
-    name: str
-    email: EmailStr
+    name: Optional[str] = None
+    email: Optional[EmailStr] = None
+    marked_for_deletion: bool = False
 
 
 class UserCreate(UserBase):
     """Schema for creating a user."""
-    pass
+    marked_for_deletion: bool = False
 
 
 # Properties to receive on User update
@@ -37,6 +39,20 @@ class UserUpdate(BaseSchema):
     """Schema for updating a user."""
     name: Optional[str] = None
     email: Optional[str] = None
+    marked_for_deletion: Optional[bool] = None
+
+
+class MarkUserForDeletionRequest(BaseSchema):
+    """Schema for marking a user for deletion."""
+    user_id: UUID
+
+
+class MarkUserForDeletionResponse(BaseSchema):
+    """Schema for marking user for deletion response."""
+    success: bool
+    user_id: UUID
+    marked_for_deletion: bool
+    message: str
 
 
 # Properties to return to client

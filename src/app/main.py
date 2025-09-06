@@ -84,8 +84,38 @@ def create_app() -> FastAPI:
         logger.info(f"URL: {request.url}")
         logger.info(f"Path: {request.url.path}")
         logger.info(f"Query params: {dict(request.query_params)}")
-        logger.info(f"Headers: {dict(request.headers)}")
+        
+        # Mask sensitive headers (Authorization)
+        headers_dict = dict(request.headers)
+        if 'authorization' in headers_dict:
+            auth_header = headers_dict['authorization']
+            if auth_header.startswith('Bearer '):
+                # Show only first 10 characters of the token
+                masked_token = auth_header[:16] + "..." if len(auth_header) > 16 else auth_header
+                headers_dict['authorization'] = masked_token
+        logger.info(f"Headers: {headers_dict}")
         logger.info(f"Client: {request.client}")
+        
+        # Log request body for POST requests
+        if request.method == "POST":
+            try:
+                body = await request.body()
+                if body:
+                    # Try to parse as JSON for better readability
+                    try:
+                        import json
+                        body_json = json.loads(body.decode('utf-8'))
+                        logger.info(f"Request body: {body_json}")
+                    except (json.JSONDecodeError, UnicodeDecodeError):
+                        # If not JSON, log as string (truncated if too long)
+                        body_str = body.decode('utf-8', errors='replace')
+                        if len(body_str) > 1000:
+                            body_str = body_str[:1000] + "... (truncated)"
+                        logger.info(f"Request body: {body_str}")
+                else:
+                    logger.info("Request body: (empty)")
+            except Exception as e:
+                logger.warning(f"Could not read request body: {str(e)}")
         
         # Process the request
         response = await call_next(request)

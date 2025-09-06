@@ -35,7 +35,11 @@ target_metadata = Base.metadata
 # ... etc.
 
 def get_url():
-    """Get the database URL from alembic.ini."""
+    """Get the database URL from environment or alembic.ini."""
+    # When running inside Docker, use the service name 'postgres'
+    # When running locally, use localhost
+    if os.getenv("DOCKER_ENV"):
+        return "postgresql://bazar:secret@postgres:5432/bazardev"
     return config.get_main_option("sqlalchemy.url")
 
 def run_migrations_offline() -> None:
@@ -70,8 +74,8 @@ def run_migrations_online() -> None:
 
     """
     configuration = config.get_section(config.config_ini_section)
-    # Use the URL from alembic.ini, not from environment
-    # configuration["sqlalchemy.url"] = get_url()
+    # Use the dynamic URL that handles Docker vs local environments
+    configuration["sqlalchemy.url"] = get_url()
     connectable = engine_from_config(
         configuration,
         prefix="sqlalchemy.",

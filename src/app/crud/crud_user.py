@@ -47,5 +47,36 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate, UserModel]):
     async def delete(self, db: Client, *, id: str) -> User:
         return await super().delete(db, id=id)
 
+    async def mark_for_deletion(self, db: AsyncSession, *, user_id: str) -> bool:
+        """Mark a user for deletion."""
+        from sqlalchemy import update, select
+        
+        # Check if user exists and is not already marked for deletion
+        stmt = select(UserModel).where(
+            UserModel.id == user_id,
+            UserModel.marked_for_deletion == False
+        )
+        result = await db.execute(stmt)
+        user = result.scalar_one_or_none()
+        
+        if not user:
+            return False
+        
+        # Mark user for deletion
+        update_stmt = update(UserModel).where(
+            UserModel.id == user_id
+        ).values(marked_for_deletion=True)
+        
+        await db.execute(update_stmt)
+        await db.commit()
+        
+        return True
+
+    async def get_users_marked_for_deletion(self, db: AsyncSession) -> list[UserModel]:
+        """Get all users marked for deletion."""
+        stmt = select(UserModel).where(UserModel.marked_for_deletion == True)
+        result = await db.execute(stmt)
+        return result.scalars().all()
+
 
 user = CRUDUser(User, UserModel)

@@ -14,6 +14,7 @@ class User(Base):
     is_anonymous = Column(Boolean, default=False, nullable=False)
     anonymous_id = Column(String, nullable=True, unique=True)  # For tracking before email confirmation
     converted_from_anonymous_id = Column(String, nullable=True)  # Links to previous anonymous profile
+    marked_for_deletion = Column(Boolean, default=False, nullable=False)  # Mark user for deletion
     
     # Relationships
     files = relationship("File", back_populates="owner")

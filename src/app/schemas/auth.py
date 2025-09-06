@@ -23,7 +23,7 @@ class SupabaseSession(BaseModel):
     access_token: str
     refresh_token: str
     expires_in: int
-    expires_at: str
+    expires_at: int
     token_type: str
 
 
@@ -39,6 +39,28 @@ class UserInfo(BaseModel):
     username: str
     email: str
     id: str
+    created_at: str
+    last_sign_in_at: Optional[str] = None
+
+
+class AnonymousUserInfo(BaseModel):
+    """User information for anonymous users."""
+    id: str
+    email: Optional[str] = None
+    isAnonymous: bool = True
+    emailConfirmed: bool = False
+    email_confirmed_at: Optional[str] = None
+    created_at: str
+    last_sign_in_at: Optional[str] = None
+
+
+class VerifiedUserInfo(BaseModel):
+    """User information for verified users."""
+    id: str
+    email: str
+    isAnonymous: bool = False
+    emailConfirmed: bool = True
+    email_confirmed_at: Optional[str] = None
     created_at: str
     last_sign_in_at: Optional[str] = None
 
@@ -61,6 +83,7 @@ class RegisterRequest(BaseModel):
     email: EmailStr
     password: str
     confirm_password: str
+    previous_anonymous_id: str | None = None
     metadata: UserMetadata | None = None
 
     def validate_passwords(self) -> None:
@@ -77,7 +100,22 @@ class AnonymousUserResponse(BaseModel):
     message: str
 
 
+class AnonymousUserSessionResponse(BaseModel):
+    """Response schema for anonymous user creation with session data."""
+    user: AnonymousUserInfo
+    session: SupabaseSession
+
+
+class ConvertedUserSessionResponse(BaseModel):
+    """Response schema for converted user with session data."""
+    user: VerifiedUserInfo
+    session: Optional[SupabaseSession] = None
+    requires_email_confirmation: Optional[bool] = False
+    message: Optional[str] = None
+
+
 class ConvertAnonymousRequest(BaseModel):
     """Request schema for converting anonymous user to verified user."""
-    anonymous_id: str
+    user_id: str
+    name: str
     register_data: RegisterRequest

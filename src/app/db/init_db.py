@@ -51,6 +51,12 @@ async def _create_system_roles(db: AsyncSession) -> None:
 async def _create_users(db: AsyncSession) -> None:
     """Create users from JSON seed files if they don't exist.
     
+    Creates users with the following field values:
+    - is_anonymous: false (seed users are regular users)
+    - marked_for_deletion: false (seed users are not marked for deletion)
+    - anonymous_id: NULL (not applicable for seed users)
+    - converted_from_anonymous_id: NULL (not applicable for seed users)
+    
     Args:
         db: Database session
         
@@ -90,6 +96,7 @@ async def _create_users(db: AsyncSession) -> None:
             role_id = role_map[role_name]
             
             # Check if user already exists
+            # Note: This works with both old and new schema versions
             result = await db.execute(
                 text("SELECT 1 FROM users WHERE email = :email"),
                 {"email": user_details["email"]}
@@ -99,11 +106,13 @@ async def _create_users(db: AsyncSession) -> None:
                 logger.info(f"User already exists: {user_details['email']} - skipping")
                 continue
             
-            # Create user
+            # Create user with all required fields
+            # Note: Seed users are regular users (not anonymous) and not marked for deletion
+            # Optional fields (anonymous_id, converted_from_anonymous_id, deleted_at) default to NULL
             await db.execute(
                 text("""
-                INSERT INTO users (id, name, email, created_at, updated_at)
-                VALUES (:id, :name, :email, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                INSERT INTO users (id, name, email, is_anonymous, marked_for_deletion, created_at, updated_at)
+                VALUES (:id, :name, :email, false, false, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
                 """),
                 {
                     "id": user_details["id"],

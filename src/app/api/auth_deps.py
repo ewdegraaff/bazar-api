@@ -29,15 +29,15 @@ async def get_current_user(
     """Get the current authenticated user."""
     try:
         user_info = await auth_service.verify_token(token, db)
-        logger.info(f"Token verified, looking for user with email: {user_info['email']}")
+        logger.info(f"Token verified, looking for user with ID: {user_info['id']}")
         
-        # Look up user by email instead of ID
-        stmt = select(User).where(User.email == user_info["email"])
+        # Look up user by ID (works for both anonymous and verified users)
+        stmt = select(User).where(User.id == user_info["id"])
         result = await db.execute(stmt)
         user = result.scalar_one_or_none()
         
         if not user:
-            logger.error(f"User authenticated in Supabase but not found in application database: {user_info['email']}")
+            logger.error(f"User authenticated in Supabase but not found in application database: {user_info['id']}")
             raise HTTPException(
                 status_code=403,
                 detail="User not registered in application. Please complete registration first."

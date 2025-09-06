@@ -43,6 +43,10 @@ class Settings(BaseSettings):
         default_factory=lambda: os.getenv("SUPABASE_KEY"),
         description="Supabase anon/public key"
     )
+    SUPABASE_SERVICE_KEY: str | None = Field(
+        default_factory=lambda: os.getenv("SUPABASE_SERVICE_KEY"),
+        description="Supabase service role key for admin operations"
+    )
     
     # Database Configuration
     DATABASE_URL: str = Field(
