@@ -34,6 +34,7 @@ def upgrade() -> None:
         sa.Column('id', sa.UUID(), server_default=sa.text('gen_random_uuid()'), nullable=False),
         sa.Column('email', sa.String(), nullable=True),
         sa.Column('name', sa.String(), nullable=True),
+        sa.Column('profile_image_url', sa.String(), nullable=True),
         sa.Column('is_anonymous', sa.Boolean(), nullable=False, server_default='false'),
         sa.Column('anonymous_id', sa.String(), nullable=True, unique=True),
         sa.Column('converted_from_anonymous_id', sa.String(), nullable=True),

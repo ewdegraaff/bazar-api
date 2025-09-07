@@ -9,7 +9,7 @@ policies:
     resources: ["users", "files"]
     
   - roles: ["user"]
-    actions: ["read"]
+    actions: ["read", "update"]
     resources: ["users", "files"]
     
   # Plan Role Policies

@@ -11,6 +11,7 @@ class User(Base):
     
     email = Column(String, nullable=True, unique=True)  # Made nullable for anonymous users
     name = Column(String, nullable=True)
+    profile_image_url = Column(String, nullable=True)
     is_anonymous = Column(Boolean, default=False, nullable=False)
     anonymous_id = Column(String, nullable=True, unique=True)  # For tracking before email confirmation
     converted_from_anonymous_id = Column(String, nullable=True)  # Links to previous anonymous profile

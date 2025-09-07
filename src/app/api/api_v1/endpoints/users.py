@@ -6,7 +6,7 @@ from src.app.api.auth_deps import CurrentUser
 from src.app.db.session import SessionDep
 from src.app.core.pbac import require_permission
 from src.app.schemas import User
-from src.app.schemas.user import UserCreate, UserUpdate, UserResponse
+from src.app.schemas.user import UserCreate, UserUpdate, UserResponse, UserPublic
 from src.app.models.core import User as UserModel
 
 router = APIRouter()
@@ -33,13 +33,13 @@ async def create_user(
     return user
 
 
-@router.get("", response_model=list[User])
+@router.get("", response_model=list[UserPublic])
 async def read_users(
     current_user: Annotated[CurrentUser, Depends(require_permission("read", "users"))],
     db: SessionDep,
     skip: int | None = None,
     limit: int | None = None,
-) -> list[User]:
+) -> list[UserPublic]:
     """Get all users."""
     stmt = select(UserModel)
     if skip is not None:
@@ -50,20 +50,20 @@ async def read_users(
     return result.scalars().all()
 
 
-@router.get("/me", response_model=User)
+@router.get("/me", response_model=UserPublic)
 async def read_user_me(
     current_user: Annotated[CurrentUser, Depends(require_permission("read", "users"))]
-) -> User:
+) -> UserPublic:
     """Get current user."""
     return current_user
 
 
-@router.get("/{user_id}", response_model=User)
+@router.get("/{user_id}", response_model=UserPublic)
 async def read_user(
     user_id: str,
     db: SessionDep,
     current_user: Annotated[CurrentUser, Depends(require_permission("read", "users"))]
-) -> User:
+) -> UserPublic:
     """Get a specific user."""
     stmt = select(UserModel).where(UserModel.id == user_id)
     result = await db.execute(stmt)
@@ -86,6 +86,26 @@ async def update_user(
     user = result.scalar_one_or_none()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+    
+    # Check if user is trying to update their own account or has admin privileges
+    # Load user with system roles to check for admin privileges
+    from sqlalchemy.orm import selectinload
+    stmt_with_roles = select(UserModel).options(selectinload(UserModel.system_roles)).where(UserModel.id == current_user.id)
+    result_with_roles = await db.execute(stmt_with_roles)
+    current_user_with_roles = result_with_roles.scalar_one_or_none()
+    
+    if not current_user_with_roles:
+        raise HTTPException(status_code=403, detail="User not found")
+    
+    # Get user system roles
+    user_system_roles = [role.name for role in current_user_with_roles.system_roles]
+    
+    # Allow update if user is updating their own account OR has admin/superadmin role
+    is_self_update = str(user_id) == str(current_user.id)
+    has_admin_role = any(role in user_system_roles for role in ["admin", "superadmin"])
+    
+    if not (is_self_update or has_admin_role):
+        raise HTTPException(status_code=403, detail="Users can only update their own account")
     
     # Update user attributes
     for key, value in user_in.model_dump(exclude_unset=True).items():

@@ -12,10 +12,21 @@ class User(BaseSchema):
     id: UUID
     name: Optional[str] = None
     email: Optional[EmailStr] = None
+    profile_image_url: Optional[str] = None
     created_at: datetime
     updated_at: datetime
     deleted_at: Optional[datetime] = None
     marked_for_deletion: bool
+
+
+class UserPublic(BaseSchema):
+    """Public user schema without sensitive fields."""
+    id: UUID
+    name: Optional[str] = None
+    email: Optional[EmailStr] = None
+    profile_image_url: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
 
 
 # request
@@ -25,6 +36,7 @@ class UserBase(BaseSchema):
     """Base user schema."""
     name: Optional[str] = None
     email: Optional[EmailStr] = None
+    profile_image_url: Optional[str] = None
     marked_for_deletion: bool = False
 
 
@@ -38,7 +50,7 @@ class UserCreate(UserBase):
 class UserUpdate(BaseSchema):
     """Schema for updating a user."""
     name: Optional[str] = None
-    email: Optional[str] = None
+    profile_image_url: Optional[str] = None
     marked_for_deletion: Optional[bool] = None
 
 

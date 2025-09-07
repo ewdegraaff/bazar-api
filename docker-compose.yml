@@ -15,6 +15,7 @@ services:
     volumes:
       - ./src:/app/src 
       - ./alembic:/app/alembic
+      - ./policies.yaml:/app/policies.yaml
     depends_on:
       postgres:
         condition: service_healthy
